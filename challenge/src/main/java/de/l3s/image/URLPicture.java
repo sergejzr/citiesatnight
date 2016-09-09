@@ -9,8 +9,8 @@ import java.net.URL;
 
 import javax.imageio.ImageIO;
 
-import sz.de.l3s.features.util.FileDistributer;
-import sz.de.l3s.features.util.MD5;
+import de.l3s.features.util.FileDistributer;
+import de.l3s.features.util.MD5;
 
 
 

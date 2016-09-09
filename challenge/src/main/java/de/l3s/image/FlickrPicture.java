@@ -9,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Vector;
 
-import sz.de.l3s.features.util.FileDistributer;
+import de.l3s.features.util.FileDistributer;
 
 
 

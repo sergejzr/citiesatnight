@@ -22,12 +22,10 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 
-
-
-import sz.de.l3s.features.FeatureExtractor;
-import sz.de.l3s.features.VisualFeature;
-import sz.de.l3s.features.VisualFeatureGroup;
-import sz.de.l3s.features.util.Features2SQLString;
+import de.l3s.features.FeatureExtractor;
+import de.l3s.features.VisualFeature;
+import de.l3s.features.VisualFeatureGroup;
+import de.l3s.features.util.Features2SQLString;
 import uk.ac.soton.ecs.jsh2.picalert.ImageFeatureExtractor;
 
 public abstract class Picture {

@@ -11,6 +11,7 @@ import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -24,6 +25,7 @@ import org.openimaj.image.MBFImage;
 import org.openimaj.image.analysis.algorithm.EdgeDirectionCoherenceVector;
 import org.openimaj.image.colour.Transforms;
 import org.openimaj.image.feature.global.AvgBrightness;
+import org.openimaj.image.feature.global.Colorfulness;
 import org.openimaj.image.feature.global.HueStats;
 import org.openimaj.image.feature.global.Naturalness;
 import org.openimaj.image.feature.global.Sharpness;
@@ -41,7 +43,7 @@ import org.openimaj.ml.clustering.ByteCentroidsResult;
 import org.openimaj.ml.clustering.assignment.HardAssigner;
 import org.openimaj.util.pair.IntFloatPair;
 
-import sz.de.l3s.features.FeatureExtractor;
+import de.l3s.features.FeatureExtractor;
 
 /**
  * @author Jonathon Hare <jsh2@ecs.soton.ac.uk>
@@ -65,7 +67,7 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 
 	static {
 		for (int i = 0; i < QUANTISERS.length; i++)
-			QUANT[i] = loadQuantiser("pubpriv-dog-sift-fkm" + QUANTISERS[i] + "K-rnd1M.byte");
+			QUANT[i] = loadQuantiser("pubpriv-dog-sift-fkm" + QUANTISERS[i] + "K-rnd1M.voc.byte");
 	}
 
 	// same goes for the Haar cascades
@@ -85,26 +87,17 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 	 */
 	protected static ByteCentroidsResult loadQuantiser(String name) {
 		try {
-			 InputStream bis = ImageFeatureExtractor.class.getResourceAsStream(name);
-
-			 byte[][] c=deserialize(bis, byte[][].class);
-			 
 			ByteCentroidsResult quant = new ByteCentroidsResult();
-			quant.centroids=c;
-			
-			
-			//IOUtils.read(bis, ByteCentroidsResult.class);
-					
-					//deserialize(bis, ByteCentroidsResult.class);//IOUtils.read(bis, ByteCentroidsResult.class);
 
-			// byte[][] clusters = quant.getClusters();
-			return quant;
+			Scanner sc;
+			
+			InputStream bis = ImageFeatureExtractor.class.getResourceAsStream(name+".bcr");
+			quant.readASCII(sc=new Scanner(bis));
+			sc.close();
+				return quant;
 		} catch (IOException e) {
 			e.printStackTrace();
 			
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} 
 		return null;
 	}
@@ -249,7 +242,7 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 				HashSet<String> hs = new HashSet<String>();
 			
 				hs.add("dog-sift-fkm12k-rnd1M");
-				Hashtable<String, String> res = fe.extractFrom(test, hs);
+				Hashtable<String, String> res = fe.extractFrom(test, fe.getAvailableFeatures());
 
 				Set<String> features = fe.getAvailableFeatures();
 				// hs.addAll(res.keySet());
@@ -293,10 +286,10 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 
 		MBFImage hsvimg = Transforms.RGB_TO_HSV(rgbimg); // HSV
 
-		FImage greyimg = Transforms.calculateIntensityNTSC(rgbimg); // grey
+		
 
 		for (String f : features) {
-
+			FImage greyimg = Transforms.calculateIntensityNTSC(rgbimg); // grey
 			if (f.startsWith("dog-sift-")) {
 				// sift
 				if (QUANTISERS.length > 0) {
@@ -312,29 +305,33 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 			if (f.equals("avg_brightness")) {
 				// avg_brightness
 				AvgBrightness avgBrightness = new AvgBrightness();
-				avgBrightness.analyseImage(rgbimg);
+				rgbimg.analyseWith(avgBrightness);
+			
 				data.put("avg_brightness", fvProviderToString(avgBrightness));
 
 			}
 			if (f.equals(
-					"colorfulness")) {/*
-										 * // colorfulness, colorfulness_classes
-										 * Colorfulness colorfulness = new
-										 * Colorfulness();
-										 * 
-										 * rgbimg.process(colorfulness);
-										 * data.put("colorfulness",
-										 * fvProviderToString(colorfulness)); //
-										 * data.put("colorfulness_classes", //
-										 * fvProviderToString(colorfulness.
-										 * getColorfulnessAttribute()));
-										 * 
-										 */
+					"colorfulness")) {
+										  // colorfulness, colorfulness_classes
+										  Colorfulness colorfulness = new
+										 Colorfulness();
+										  rgbimg.analyseWith(colorfulness);
+										 
+										  data.put("colorfulness",
+										  fvProviderToString(colorfulness)); //
+										  /*
+										  data.put("colorfulness_classes", //
+										  fvProviderToString(colorfulness.
+										  getColorfulnessAttribute()));
+										  */
+										  
+										 
 			}
 			if (f.equals("edch")) {
 				// edch
 				EdgeDirectionCoherenceVector edcv = new EdgeDirectionCoherenceVector();
-				edcv.analyseImage(greyimg);
+				greyimg.analyseWith(edcv);
+			
 
 				data.put("edch", fvProviderToString(edcv));
 			}
@@ -381,21 +378,23 @@ public class ImageFeatureExtractor implements FeatureExtractor {
 			if (f.equals("hue_stats")) {
 				// hue_stats
 				HueStats hueStats = new HueStats();
-				hueStats.analyseImage(hsvimg);
+				hsvimg.analyseWith(hueStats);
+				
 
 				data.put("hue_stats", fvProviderToString(hueStats));
 			}
 			if (f.equals("naturalness")) {
 				// naturalness
 				Naturalness naturalness = new Naturalness();
-				naturalness.analyseImage(rgbimg);
+				rgbimg.analyseWith(naturalness);
 
 				data.put("naturalness", fvProviderToString(naturalness));
 			}
 			if (f.equals("sharpness")) {
 				// sharpness
 				Sharpness sharpness = new Sharpness();
-				sharpness.analyseImage(greyimg);
+				greyimg.analyseWith(sharpness);
+				
 
 				data.put("sharpness", fvProviderToString(sharpness));
 			}

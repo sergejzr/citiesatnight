@@ -5,8 +5,8 @@ package de.l3s.image;
 import java.util.Hashtable;
 import java.util.Map;
 
-import sz.de.l3s.features.FeatureReader;
-import sz.de.l3s.features.VisualFeatureGroup;
+import de.l3s.features.FeatureReader;
+import de.l3s.features.VisualFeatureGroup;
 
 public class FeatureConverter {
 	FeatureReader fr = new FeatureReader();
